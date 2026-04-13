@@ -18,30 +18,37 @@ The whole idea: one Ghostty window, one tmux session, many tmux windows — and 
 - Swift toolchain (comes with Xcode or Command Line Tools)
 - `fzf` (optional, used by the shell functions below)
 
-## Build
+## Install
 
 ```sh
 git clone git@github.com:paul-wolf/winduz.git
 cd winduz
-swift build
+make install
 ```
 
-Two binaries are produced in `.build/debug/`:
+This will:
+1. Build a release binary.
+2. Install `Winduz` and `wz` to `~/.local/bin/` (override with `PREFIX=/usr/local make install`).
+3. Register a launchd agent so Winduz launches automatically at login.
+4. Start Winduz immediately.
 
-- `Winduz` — the menu bar app
-- `wz` — the CLI
-
-Run the menu bar app:
+If `~/.local/bin` is not on your PATH, add it to `~/.zshrc`:
 
 ```sh
+export PATH="$HOME/.local/bin:$PATH"
+```
+
+To uninstall:
+
+```sh
+make uninstall
+```
+
+## Development
+
+```sh
+make dev        # runs the debug build in the foreground
 swift run Winduz
-# or: .build/debug/Winduz &
-```
-
-Symlink the CLI onto your PATH:
-
-```sh
-ln -s "$PWD/.build/debug/wz" /usr/local/bin/wz
 ```
 
 ## Features
