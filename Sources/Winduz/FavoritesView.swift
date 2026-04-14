@@ -3,7 +3,7 @@ import WinduzCore
 
 struct FavoritesView: View {
     @State private var query: String = ""
-    @State private var favorites: [Favorite] = []
+    @State private var entries: [ScoredEntry] = []
     @State private var selectedIndex: Int = 0
     @State private var pinned: Bool = true
     @FocusState private var fieldFocused: Bool
@@ -12,10 +12,10 @@ struct FavoritesView: View {
     let onPinToggle: (Bool) -> Void
     let onEscape: () -> Void
 
-    var filtered: [Favorite] {
-        if query.isEmpty { return favorites }
+    var filtered: [ScoredEntry] {
+        if query.isEmpty { return entries }
         let q = query.lowercased()
-        return favorites.filter {
+        return entries.filter {
             $0.name.lowercased().contains(q) || $0.path.lowercased().contains(q)
         }
     }
@@ -41,13 +41,13 @@ struct FavoritesView: View {
             Divider()
             ScrollViewReader { proxy in
                 List {
-                    ForEach(Array(filtered.enumerated()), id: \.element.path) { idx, fav in
-                        row(fav, selected: idx == selectedIndex)
+                    ForEach(Array(filtered.enumerated()), id: \.element.path) { idx, entry in
+                        row(entry, selected: idx == selectedIndex)
                             .id(idx)
                             .contentShape(Rectangle())
                             .onTapGesture {
                                 selectedIndex = idx
-                                onOpen(fav.path)
+                                onOpen(entry.path)
                             }
                     }
                 }
@@ -79,14 +79,22 @@ struct FavoritesView: View {
     }
 
     @ViewBuilder
-    private func row(_ fav: Favorite, selected: Bool) -> some View {
-        VStack(alignment: .leading, spacing: 2) {
-            Text(fav.name)
-            Text(fav.path)
-                .font(.caption)
-                .foregroundColor(selected ? .white.opacity(0.8) : .secondary)
-                .lineLimit(1)
-                .truncationMode(.middle)
+    private func row(_ entry: ScoredEntry, selected: Bool) -> some View {
+        HStack(spacing: 6) {
+            VStack(alignment: .leading, spacing: 2) {
+                Text(entry.name)
+                Text(entry.path)
+                    .font(.caption)
+                    .foregroundColor(selected ? .white.opacity(0.8) : .secondary)
+                    .lineLimit(1)
+                    .truncationMode(.middle)
+            }
+            Spacer()
+            if entry.isFavorite {
+                Image(systemName: "star.fill")
+                    .font(.caption2)
+                    .foregroundColor(selected ? .white.opacity(0.6) : .secondary)
+            }
         }
         .padding(.vertical, 2)
         .padding(.horizontal, 6)
@@ -108,7 +116,7 @@ struct FavoritesView: View {
     }
 
     private func reload() {
-        favorites = Store.shared.load()
+        entries = Ranker.unifiedList()
         if selectedIndex >= filtered.count { selectedIndex = 0 }
     }
 }

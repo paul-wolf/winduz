@@ -37,20 +37,21 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
     private func rebuildMenu() {
         menu.removeAllItems()
-        let favs = Store.shared.load()
-        if favs.isEmpty {
+        let entries = Ranker.unifiedList()
+        if entries.isEmpty {
             let empty = NSMenuItem(title: "No favorites — add with `wz add`", action: nil, keyEquivalent: "")
             empty.isEnabled = false
             menu.addItem(empty)
         } else {
-            for fav in favs {
+            for entry in entries {
+                let indicator = entry.isFavorite ? "★ " : ""
                 let item = NSMenuItem(
-                    title: "\(fav.name)  —  \(fav.path)",
+                    title: "\(indicator)\(entry.name)  —  \(entry.path)",
                     action: #selector(openFavorite(_:)),
                     keyEquivalent: ""
                 )
                 item.target = self
-                item.representedObject = fav.path
+                item.representedObject = entry.path
                 menu.addItem(item)
             }
         }
