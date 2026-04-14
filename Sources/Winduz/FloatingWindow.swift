@@ -2,6 +2,20 @@ import AppKit
 import SwiftUI
 import WinduzCore
 
+private func buildTimestamp() -> String {
+    let raw = CommandLine.arguments.first ?? ""
+    let path = (raw as NSString).resolvingSymlinksInPath
+    NSLog("winduz: buildTimestamp path=\(path)")
+    guard !path.isEmpty,
+          let attrs = try? FileManager.default.attributesOfItem(atPath: path),
+          let date = attrs[FileAttributeKey.modificationDate] as? Date else {
+        return "[unknown build]"
+    }
+    let fmt = DateFormatter()
+    fmt.dateFormat = "yyyy-MM-dd HH:mm:ss"
+    return "[\(fmt.string(from: date))]"
+}
+
 final class FloatingWindowController {
     private var panel: NSPanel?
 
@@ -39,7 +53,7 @@ final class FloatingWindowController {
             backing: .buffered,
             defer: false
         )
-        p.title = "Winduz"
+        p.title = "Winduz  \(buildTimestamp())"
         p.contentView = hosting
         p.level = .floating
         p.isFloatingPanel = true

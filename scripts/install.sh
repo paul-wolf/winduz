@@ -1,6 +1,11 @@
 #!/bin/bash
 set -e
 
+if [ "$(id -u)" = "0" ]; then
+    echo "error: do not run as root / with sudo — launchd user agents must be loaded by the owning user."
+    exit 1
+fi
+
 PREFIX="${PREFIX:-$HOME/.local}"
 BIN="$PREFIX/bin"
 LABEL="com.paulwolf.winduz"
@@ -41,11 +46,21 @@ cat > "$PLIST" <<EOF
 EOF
 echo "Installed launchd plist: $PLIST"
 
-# Unload existing instance if running, then load fresh
+# Register plist for launch-at-login (best effort — ignore if already loaded)
 launchctl bootout "gui/$(id -u)/$LABEL" 2>/dev/null || true
-launchctl bootstrap "gui/$(id -u)" "$PLIST"
+launchctl bootstrap "gui/$(id -u)" "$PLIST" 2>/dev/null || true
+
+# Remove quarantine so macOS doesn't block unsigned local binaries
+xattr -d com.apple.quarantine "$BIN/Winduz" 2>/dev/null || true
+xattr -d com.apple.quarantine "$BIN/wz" 2>/dev/null || true
+
+# Kill any running instance and start the freshly installed binary
+pkill -f "$BIN/Winduz" 2>/dev/null || true
+sleep 0.5
+nohup "$BIN/Winduz" > /dev/null 2>&1 &
+disown $!
 echo ""
-echo "Winduz is running and will launch automatically at login."
+echo "Winduz installed and started."
 echo ""
 
 if [[ ":$PATH:" != *":$BIN:"* ]]; then
